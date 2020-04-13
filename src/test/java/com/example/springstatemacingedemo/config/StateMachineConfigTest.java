@@ -23,27 +23,22 @@ class StateMachineConfigTest {
 
         machine.start();
 
-        System.out.println(machine.getState());
         assertEquals(PaymentState.NEW, machine.getState().getId());
 
         machine.sendEvent(PaymentEvent.PRE_AUTHORIZE);
 
-        System.out.println(machine.getState());
         assertEquals(PaymentState.NEW, machine.getState().getId());
 
         machine.sendEvent(PaymentEvent.PRE_AUTH_APPROVED);
 
-        System.out.println(machine.getState());
         assertEquals(PaymentState.PRE_AUTH, machine.getState().getId());
 
         machine.sendEvent(PaymentEvent.AUTHORIZE);
 
-        System.out.println(machine.getState());
         assertEquals(PaymentState.PRE_AUTH, machine.getState().getId());
 
         machine.sendEvent(PaymentEvent.AUTH_APPROVED);
 
-        System.out.println(machine.getState());
         assertEquals(PaymentState.AUTH, machine.getState().getId());
     }
 }
