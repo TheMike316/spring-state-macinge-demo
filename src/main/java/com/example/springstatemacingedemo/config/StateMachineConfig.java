@@ -4,6 +4,8 @@ import com.example.springstatemacingedemo.domain.PaymentEvent;
 import com.example.springstatemacingedemo.domain.PaymentState;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.statemachine.action.Action;
 import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.StateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineConfigurationConfigurer;
@@ -14,6 +16,7 @@ import org.springframework.statemachine.state.State;
 
 import java.util.EnumSet;
 import java.util.Optional;
+import java.util.Random;
 
 @Slf4j
 @Configuration
@@ -33,7 +36,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<PaymentSta
     @Override
     public void configure(StateMachineTransitionConfigurer<PaymentState, PaymentEvent> transitions) throws Exception {
         transitions
-                .withExternal().source(PaymentState.NEW).target(PaymentState.NEW).event(PaymentEvent.PRE_AUTHORIZE)
+                .withExternal().source(PaymentState.NEW).target(PaymentState.NEW).event(PaymentEvent.PRE_AUTHORIZE).action(preAuthAction())
                 .and()
                 .withExternal().source(PaymentState.NEW).target(PaymentState.PRE_AUTH).event(PaymentEvent.PRE_AUTH_APPROVED)
                 .and()
@@ -56,5 +59,26 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<PaymentSta
         };
 
         config.withConfiguration().listener(adapter);
+    }
+
+    private Action<PaymentState, PaymentEvent> preAuthAction() {
+        return context -> {
+            log.info("PreAuth was called");
+
+            // randomly approve/decline pre-auth (~80% approve, 20% decline)
+            if (new Random().nextInt(10) < 8) {
+                log.info("PreAuth was approved");
+                var message = MessageBuilder.withPayload(PaymentEvent.PRE_AUTH_APPROVED)
+                        .copyHeaders(context.getMessageHeaders())
+                        .build();
+                context.getStateMachine().sendEvent(message);
+            } else {
+                log.warn("PreAuth was declined!");
+                var message = MessageBuilder.withPayload(PaymentEvent.PRE_AUTH_DECLINED)
+                        .copyHeaders(context.getMessageHeaders())
+                        .build();
+                context.getStateMachine().sendEvent(message);
+            }
+        };
     }
 }
