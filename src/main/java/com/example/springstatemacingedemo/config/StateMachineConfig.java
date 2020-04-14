@@ -42,7 +42,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<PaymentSta
                 .and()
                 .withExternal().source(PaymentState.NEW).target(PaymentState.PRE_AUTH_ERROR).event(PaymentEvent.PRE_AUTH_DECLINED)
                 .and()
-                .withExternal().source(PaymentState.PRE_AUTH).target(PaymentState.PRE_AUTH).event(PaymentEvent.AUTHORIZE)
+                .withExternal().source(PaymentState.PRE_AUTH).target(PaymentState.PRE_AUTH).event(PaymentEvent.AUTHORIZE).action(authAction())
                 .and()
                 .withExternal().source(PaymentState.PRE_AUTH).target(PaymentState.AUTH).event(PaymentEvent.AUTH_APPROVED)
                 .and()
@@ -75,6 +75,27 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<PaymentSta
             } else {
                 log.warn("PreAuth was declined!");
                 var message = MessageBuilder.withPayload(PaymentEvent.PRE_AUTH_DECLINED)
+                        .copyHeaders(context.getMessageHeaders())
+                        .build();
+                context.getStateMachine().sendEvent(message);
+            }
+        };
+    }
+
+    private Action<PaymentState, PaymentEvent> authAction() {
+        return context -> {
+            log.info("Auth was called");
+
+            // randomly approve/decline auth (~80% approve, 20% decline)
+            if (new Random().nextInt(10) < 8) {
+                log.info("Auth was approved");
+                var message = MessageBuilder.withPayload(PaymentEvent.AUTH_APPROVED)
+                        .copyHeaders(context.getMessageHeaders())
+                        .build();
+                context.getStateMachine().sendEvent(message);
+            } else {
+                log.warn("Auth was declined!");
+                var message = MessageBuilder.withPayload(PaymentEvent.AUTH_DECLINED)
                         .copyHeaders(context.getMessageHeaders())
                         .build();
                 context.getStateMachine().sendEvent(message);
