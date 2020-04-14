@@ -1,6 +1,7 @@
 package com.example.springstatemacingedemo.service;
 
 import com.example.springstatemacingedemo.domain.Payment;
+import com.example.springstatemacingedemo.domain.PaymentState;
 import com.example.springstatemacingedemo.repository.PaymentRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 class PaymentServiceImplTest {
@@ -26,12 +29,8 @@ class PaymentServiceImplTest {
         var savedPayment = repository.save(payment);
         Long paymentId = savedPayment.getId();
 
-        service.preAuth(paymentId);
+        var sm = service.preAuth(paymentId);
 
-        Thread.sleep(500);
-
-        var changedPayment = repository.getOne(paymentId);
-
-        System.out.println(changedPayment);
+        assertEquals(PaymentState.PRE_AUTH, sm.getState().getId());
     }
 }
