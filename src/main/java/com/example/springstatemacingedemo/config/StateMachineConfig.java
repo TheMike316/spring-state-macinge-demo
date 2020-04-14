@@ -13,6 +13,7 @@ import org.springframework.statemachine.listener.StateMachineListenerAdapter;
 import org.springframework.statemachine.state.State;
 
 import java.util.EnumSet;
+import java.util.Optional;
 
 @Slf4j
 @Configuration
@@ -50,7 +51,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<PaymentSta
         var adapter = new StateMachineListenerAdapter<PaymentState, PaymentEvent>() {
             @Override
             public void stateChanged(State<PaymentState, PaymentEvent> from, State<PaymentState, PaymentEvent> to) {
-                log.info("State changed from {} to {}", from.getId(), to.getId());
+                log.info("State changed from {} to {}", Optional.ofNullable(from).map(State::getId).orElse(null), to.getId());
             }
         };
 
